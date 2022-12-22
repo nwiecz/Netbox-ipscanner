@@ -1,6 +1,14 @@
 # Netbox-ipscanner
 ip scan script for populating IPAM module in Netbox
 
+# Requirement
+add the following packages to `local_requirements.txt` file in `/opt/netbox`
+
+```
+pynetbox
+networkscan
+```
+
 # Usage
 add required modules in netbox environment and then copy the script in netbox script directory (usually /opt/netbox/netbox/scripts/)... you are ready to go :)
 
