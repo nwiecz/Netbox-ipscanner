@@ -2,10 +2,25 @@ import pynetbox, urllib3, networkscan, socket, ipaddress
 from extras.scripts import Script
 
 TOKEN='xxx'
+NETBOXURL='https://netbox.eample.com'
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning) #disable safety warnings
 
 class IpScan(Script):
     #optional variables in UI here!
+    TagBasedScanning = BooleanVar(
+        label="Tag Based Scanning?",
+        default=False,
+        description="enable Tag Based Scanning, to scan only Subnets with specified Tag.",
+    )
+    tag = StringVar(
+         max_length=20,
+         label="Scan Tag?",
+         default="scan",
+         description="specify the Tag to filter Subnets to be scanned",
+         required=True,
+    )
+
     class Meta:
         name = "IP Scanner"
         description = "Scans available prefixes and updates ip addresses in IPAM Module"
@@ -25,15 +40,20 @@ class IpScan(Script):
             else:
                 return data[0]
 
-        nb = pynetbox.api('https://netbox.eample.com', token=TOKEN)
+        nb = pynetbox.api(NETBOXURL, token=TOKEN)
         nb.http_session.verify = False #disable certificate checking
 
         subnets = nb.ipam.prefixes.all() #extracts all prefixes, in format x.x.x.x/yy
 
         for subnet in subnets:
+            if data['TagBasedScanning'] and data['tag'] not in str(subnet.tags): # Only scan subnets with the Tag
+                #self.log_debug(f'checking {subnet}...Tag is {subnet.tags}')
+                self.log_warning(f"Scan of {subnet.prefix} NOT done (missing '{data['tag']}' tag)")
+                continue
             if str(subnet.status) == 'Reserved': #Do not scan reserved subnets
                 self.log_warning(f"Scan of {subnet.prefix} NOT done (is Reserved)")
                 continue
+            #self.log_debug(f'checking {subnet}...Tag is {subnet.tags}')           
             IPv4network = ipaddress.IPv4Network(subnet)
             mask = '/'+str(IPv4network.prefixlen)
             scan = networkscan.Networkscan(subnet)
