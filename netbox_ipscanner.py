@@ -69,6 +69,9 @@ class IpScan(Script):
                         pass #do nothing: It exists in NB and is in the pinged list: ok continue, you will see it later when you cycle the ip addresses that have responded whether to update something
 			#self.log_success(f"The host {str(netbox_address).rpartition('/')[0]} exists in netbox and has been pinged")
                     else: #if it exists in netbox but is NOT in the list, mark it as deprecated
+                        if str(netbox_address.status) == 'Deprecated' or str(netbox_address.status) == 'Reserved': #check the ip address to be Deprecated or Reserved
+                            pass # leave it as is
+                        else:
                         self.log_failure(f"Host {str(netbox_address)} exists in netbox but not responding --> DEPRECATED")
                         nb.ipam.ip_addresses.update([{'id':netbox_address.id, 'status':'deprecated'},])
             ####
