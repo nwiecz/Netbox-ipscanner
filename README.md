@@ -5,6 +5,7 @@ ip scan script for populating IPAM module in Netbox
 add the following packages to `local_requirements.txt` file in `/opt/netbox`
 
 ```
+ipcalc
 pynetbox
 networkscan
 ```
