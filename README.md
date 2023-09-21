@@ -1,18 +1,33 @@
 # Netbox-ipscanner
-ip scan script for populating IPAM module in Netbox
+Dynamic IP Scanner script for NetBox to programatically populate NetBox's IPAM
 
-# Requirement
-add the following packages to `local_requirements.txt` file in `/opt/netbox`
+## Requirements
+This script requires the `nmap` system package and Python library to run
 
+## Installation
+```bash
+netbox_path=/opt/netbox
+
+# Install system packages (tweak for you package manager)
+apt-get update
+apt-get install nmap
+
+# Install Python library
+pip install python-nmap
+
+# Download custom script
+curl 'https://raw.githubusercontent.com/Scraps23/Netbox-ipscanner/master/netbox_ipscanner.py' \
+    -o "${netbox_path}/netbox/scripts/netbox_ipscanner.py"
 ```
-ipcalc
-pynetbox
-networkscan
-```
 
-# Usage
-add required modules in netbox environment and then copy the script in netbox script directory (usually `/opt/netbox/netbox/scripts/`)... you are ready to go :)
+## What it does
 
-# What it does exactly?
-Reads the prefixes in IPAM module and for each subnet makes a ping scan. Every responding address is added into the ip address IPAM module with DNS resolution. If an address exists in Netbox but is not pingable, it is marked as "Deprecated"; if DNS resolution is changed then it's updated.
-Subnets marked as "Reserved" are not scanned.
+1. This script will either: 
+   - Consume a NetBox Prefix object if a `target_prefix` was provided
+   - Pull all NetBox Prefix objects otherwise
+2. It will then perform `nmap.PostScannerYield.scan()` against that prefix with the `-sL` NMAP options
+3. Based on the returned data and form data, the script will:
+   - Mark the address deprecated, if there was no response and the address was not already Deprecated or Reserved
+   - Mark the address active, if there was a resposne and the address was Deprecated
+   - Create a new address with the returned `hostname`, if there was already none and `create_new` is checked
+   - Skip the address, if it didn't match the filters or other criteria
